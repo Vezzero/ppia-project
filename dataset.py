@@ -74,8 +74,8 @@ users = []
 tweets = []
 # Generate users with random home and work locations
 for i in range(num_users):
-    home_lat = random.uniform(24.396308, 49.384358)
-    home_lon = random.uniform(-125.0, -66.93457)
+    home_lat = random.uniform(37.7081, 37.8324)
+    home_lon = random.uniform(-123.0137, -122.3570)
     home = [home_lat, home_lon]
     work_lat, work_lon = generate_location_near(home_lat, home_lon, 10, 20)
     work = [work_lat, work_lon]
