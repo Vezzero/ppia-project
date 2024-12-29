@@ -28,11 +28,12 @@ X = np.array([[1.0, 2.5], [2, 2], [2, 3],
 
 clustering = sklearn.cluster.DBSCAN(eps=2,min_samples=2).fit(X)
 print(clustering.labels_)
-labels = set(clustering.labels_)
+unlabels = set(clustering.labels_)
 clusters = {}
-for index in set:
+for index in unlabels:
     clusters[index] = []
     for x in zip(X,clustering.labels_):
         if(x[1] == index):
             clusters[index].append(x[0])
-print(clusters)
+readable_clusters = {int(label): [point.tolist() for point in points] for label, points in clusters.items()}
+print("Clusters:", readable_clusters)
