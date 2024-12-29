@@ -9,16 +9,26 @@ def centroid(data:list) -> list:
             medoid[index] += elem
     return [x/len(data) for x in medoid]
 
-def medoid(data:list, func) -> list:
-    #TODO to be implemented medoid (https://en.wikipedia.org/wiki/Medoid)
-    pass
+def medoid(data: list) -> list:
+    def distance(point1, point2):
+        return sum((x - y) ** 2 for x, y in zip(point1, point2)) ** 0.5
+    best_medoid = None
+    min_total_distance = float('inf')
+    for candidate in data:
+        total_distance = 0
+        for point in data:
+            total_distance += distance(candidate, point)
+        if total_distance < min_total_distance:
+            min_total_distance = total_distance
+            best_medoid = candidate
+    return best_medoid
 
 X = np.array([[1.0, 2.5], [2, 2], [2, 3],
               [8, 7], [8, 8], [3, 5]])
 
 clustering = sklearn.cluster.DBSCAN(eps=2,min_samples=2).fit(X)
 print(clustering.labels_)
-set = set(clustering.labels_)
+labels = set(clustering.labels_)
 clusters = {}
 for index in set:
     clusters[index] = []
