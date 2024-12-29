@@ -1,9 +1,9 @@
 import pandas as pd
 import time
 import numpy.random as nr
-import geopy
 import random
 import math
+from datetime import datetime, timedelta
 
 # Funzione per calcolare le coordinate a una distanza specifica
 def generate_location_near(lat, lon, min_distance_km, max_distance_km):
@@ -25,25 +25,42 @@ def generate_location_near(lat, lon, min_distance_km, max_distance_km):
     new_lon = lon + math.degrees(delta_lon)
     return new_lat, new_lon
 
-
 class Tweet:
-    def __init__(self,id, user, coords, timestamp):
-        self.id= id
+    def __init__(self, id, user, coords, timestamp):
+        self.id = id
         self.coords = coords
         self.user = user
         self.timestamp = timestamp
 
     def __str__(self):
         return f"tweetId:{self.id} {self.coords} {self.user.username} ora:{self.timestamp}"
-    
+
 class User:
     def __init__(self, username, home, work="Aprilia"):
         self.username = username
         self.home = home
         self.work = work
+
     def __str__(self):
         return f"{self.username}\n home:{self.home}\n work:{self.work}"
-    
+
+# Function to generate random timestamps within a range
+def random_timestamp_in_time_range(start_hour, end_hour):
+    current_date = datetime.now().date()
+
+    if start_hour <= end_hour:
+        start_time = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=start_hour)
+        end_time = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=end_hour)
+    else:
+        if random.choice([True, False]):
+            start_time = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=start_hour)
+            end_time = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=24)
+        else:
+            start_time = datetime.combine(current_date + timedelta(days=1), datetime.min.time())
+            end_time = datetime.combine(current_date + timedelta(days=1), datetime.min.time()) + timedelta(hours=end_hour)
+
+    random_time = start_time + timedelta(seconds=random.randint(0, int((end_time - start_time).total_seconds())))
+    return random_time.timestamp()
 
 r = nr.default_rng(42)
 r1 = r.random()
@@ -55,49 +72,58 @@ post_home_user = 10
 post_work_user = 1
 users = []
 tweets = []
-# Generate users, with random home and work locations
+# Generate users with random home and work locations
 for i in range(num_users):
     home_lat = random.uniform(24.396308, 49.384358)
     home_lon = random.uniform(-125.0, -66.93457)
-    home = [home_lat,home_lon]
+    home = [home_lat, home_lon]
     work_lat, work_lon = generate_location_near(home_lat, home_lon, 10, 20)
-    work = [work_lat,work_lon]
-    users.append(User(f"u{i}",home,work))
+    work = [work_lat, work_lon]
+    users.append(User(f"u{i}", home, work))
 
 # Count effective tweet ids
 tweet_id = 0
-#TODO evaluate effective distances 
 for u in users:
-    # TODO generate variable number of tweets "at home"
-    for i in range(post_home_user):
+    # Generate tweets "at home" (8 PM to 7 AM)
+    for _ in range(post_home_user):
         #noise = r.normal(size=2,loc=0,scale=0.1)
         #noisy_home = u.home + noise
-        noisy_home=generate_location_near(u.home[0],u.home[1],0,0.05)
-        tweets.append(Tweet(f"t{tweet_id}",u,noisy_home,time.time()))
+        noisy_home = generate_location_near(u.home[0], u.home[1], 0, 0.05)
+        timestamp = random_timestamp_in_time_range(20, 7)
+        tweets.append(Tweet(f"t{tweet_id}", u, noisy_home, timestamp))
         tweet_id += 1
-    # TODO generate vbariable number of tweets "at work"
-    for i in range(post_work_user):
+
+    for _ in range(post_work_user):
         #noise = r.normal(size=2,loc=0,scale=0.1)
         #noisy_home = u.home + noise
-        noisy_work=generate_location_near(u.work[0],u.work[1],0,0.05)
-        tweets.append(Tweet(f"t{tweet_id}",u,noisy_work,time.time()))
+        noisy_work = generate_location_near(u.work[0], u.work[1], 0, 0.05)
+        timestamp = random_timestamp_in_time_range(9, 17)
+        tweets.append(Tweet(f"t{tweet_id}", u, noisy_work, timestamp))
         tweet_id += 1
-    # TODO generate variable number of tweets outliers
+
+    #outliers
+    for _ in range(post_outliers):
+        #noise = r.normal(size=2,loc=0,scale=0.1)
+        #noisy_home = u.home + noise
+        outlier_lat = random.uniform(-90, 90)
+        outlier_lon = random.uniform(-180, 180)
+        timestamp = random_timestamp_in_time_range(0, 23)
+        tweets.append(Tweet(f"t{tweet_id}", u, [outlier_lat, outlier_lon], timestamp))
+        tweet_id += 1
 
 user_tweets = []
 for t in tweets:
     user_tweets.append(
         {
-                "TweetID": f"{t.id}",
-                "User": t.user.username,
-                "Latitude": t.coords[0],
-                "Longitude": t.coords[1],
-                "Timestamp": t.timestamp,
-                "User_home": t.user.home,
-                "User_work":t.user.work
-            }
+            "TweetID": t.id,
+            "User": t.user.username,
+            "Latitude": t.coords[0],
+            "Longitude": t.coords[1],
+            "Timestamp": datetime.fromtimestamp(t.timestamp).strftime("%Y-%m-%d %H:%M:%S"),
+            "User_home": t.user.home,
+            "User_work": t.user.work,
+        }
     )
-
 
 adjusted_tweets_df = pd.DataFrame(user_tweets)
 
