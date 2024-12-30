@@ -69,7 +69,7 @@ print(r1)
 print(r2)
 num_users = 10
 post_home_user = 10
-post_work_user = 1
+post_work_user = 10
 post_outliers = 2
 users = []
 tweets = []
@@ -87,17 +87,17 @@ tweet_id = 0
 for u in users:
     # Generate tweets "at home" (8 PM to 7 AM)
     for _ in range(post_home_user):
-        #noise = r.normal(size=2,loc=0,scale=0.1)
-        #noisy_home = u.home + noise
-        noisy_home = generate_location_near(u.home[0], u.home[1], 0, 0.1)
+        # noise = r.normal(size=2,loc=0,scale=0.005)
+        # noisy_home = u.home + noise
+        noisy_home = generate_location_near(u.home[0], u.home[1], 0.01, 0.3)
         timestamp = random_timestamp_in_time_range(20, 7)
         tweets.append(Tweet(f"t{tweet_id}", u, noisy_home, timestamp))
         tweet_id += 1
 
     for _ in range(post_work_user):
-        #noise = r.normal(size=2,loc=0,scale=0.1)
-        #noisy_home = u.home + noise
-        noisy_work = generate_location_near(u.work[0], u.work[1], 0, 0.1)
+        # noise = r.normal(size=2,loc=0,scale=0.005)
+        # noisy_work = u.work + noise
+        noisy_work = generate_location_near(u.work[0], u.work[1], 0.01, 0.3)
         timestamp = random_timestamp_in_time_range(9, 17)
         tweets.append(Tweet(f"t{tweet_id}", u, noisy_work, timestamp))
         tweet_id += 1
