@@ -5,16 +5,17 @@ import random
 import math
 from datetime import datetime, timedelta
 
+r = nr.default_rng(42)
 # Funzione per calcolare le coordinate a una distanza specifica
 def generate_location_near(lat, lon, min_distance_km, max_distance_km):
     # Raggio terrestre approssimativo in km
     earth_radius = 6371.0
 
     # Genera una distanza casuale tra il minimo e il massimo
-    distance_km = random.uniform(min_distance_km, max_distance_km)
+    distance_km = r.uniform(min_distance_km, max_distance_km)
 
     # Genera un angolo casuale (in radianti)
-    angle = random.uniform(0, 2 * math.pi)
+    angle = r.uniform(0, 2 * math.pi)
 
     # Calcola lo spostamento in gradi di latitudine e longitudine
     delta_lat = (distance_km / earth_radius) * math.cos(angle)
@@ -52,22 +53,21 @@ def random_timestamp_in_time_range(start_hour, end_hour):
         start_time = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=start_hour)
         end_time = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=end_hour)
     else:
-        if random.choice([True, False]):
+        if r.choice([True, False]):
             start_time = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=start_hour)
             end_time = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=24)
         else:
             start_time = datetime.combine(current_date + timedelta(days=1), datetime.min.time())
             end_time = datetime.combine(current_date + timedelta(days=1), datetime.min.time()) + timedelta(hours=end_hour)
 
-    random_time = start_time + timedelta(seconds=random.randint(0, int((end_time - start_time).total_seconds())))
+    random_time = start_time + timedelta(seconds=r.integers(0, int((end_time - start_time).total_seconds()),endpoint=True,dtype=int))
     return random_time.timestamp()
 
-r = nr.default_rng(42)
 r1 = r.random()
 r2 = r.random()
 print(r1)
 print(r2)
-num_users = 10
+num_users = 100
 post_home_user = 10
 post_work_user = 10
 post_outliers = 2
@@ -75,8 +75,8 @@ users = []
 tweets = []
 # Generate users with random home and work locations
 for i in range(num_users):
-    home_lat = random.uniform(37.7081, 37.8324)
-    home_lon = random.uniform(-123.0137, -122.3570)
+    home_lat = r.uniform(37.7081, 37.8324)
+    home_lon = r.uniform(-123.0137, -122.3570)
     home = [home_lat, home_lon]
     work_lat, work_lon = generate_location_near(home_lat, home_lon, 10, 20)
     work = [work_lat, work_lon]
@@ -105,8 +105,8 @@ for u in users:
     for _ in range(post_outliers):
         #noise = r.normal(size=2,loc=0,scale=0.1)
         #noisy_home = u.home + noise
-        outlier_lat = random.uniform(37.7081, 37.8324)
-        outlier_lon = random.uniform(-123.0137, -122.3570)
+        outlier_lat = r.uniform(37.7081, 37.8324)
+        outlier_lon = r.uniform(-123.0137, -122.3570)
         timestamp = random_timestamp_in_time_range(0, 23)
         tweets.append(Tweet(f"t{tweet_id}", u, [outlier_lat, outlier_lon], timestamp))
         tweet_id += 1
