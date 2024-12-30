@@ -70,6 +70,7 @@ print(r2)
 num_users = 10
 post_home_user = 10
 post_work_user = 1
+post_outliers = 2
 users = []
 tweets = []
 # Generate users with random home and work locations
@@ -88,7 +89,7 @@ for u in users:
     for _ in range(post_home_user):
         #noise = r.normal(size=2,loc=0,scale=0.1)
         #noisy_home = u.home + noise
-        noisy_home = generate_location_near(u.home[0], u.home[1], 0, 0.05)
+        noisy_home = generate_location_near(u.home[0], u.home[1], 0, 0.1)
         timestamp = random_timestamp_in_time_range(20, 7)
         tweets.append(Tweet(f"t{tweet_id}", u, noisy_home, timestamp))
         tweet_id += 1
@@ -96,12 +97,12 @@ for u in users:
     for _ in range(post_work_user):
         #noise = r.normal(size=2,loc=0,scale=0.1)
         #noisy_home = u.home + noise
-        noisy_work = generate_location_near(u.work[0], u.work[1], 0, 0.05)
+        noisy_work = generate_location_near(u.work[0], u.work[1], 0, 0.1)
         timestamp = random_timestamp_in_time_range(9, 17)
         tweets.append(Tweet(f"t{tweet_id}", u, noisy_work, timestamp))
         tweet_id += 1
 
-    #outliers
+    #TODO fix outliers not all around the world
     for _ in range(post_outliers):
         #noise = r.normal(size=2,loc=0,scale=0.1)
         #noisy_home = u.home + noise
