@@ -102,12 +102,11 @@ for u in users:
         tweets.append(Tweet(f"t{tweet_id}", u, noisy_work, timestamp))
         tweet_id += 1
 
-    #TODO fix outliers not all around the world
     for _ in range(post_outliers):
         #noise = r.normal(size=2,loc=0,scale=0.1)
         #noisy_home = u.home + noise
-        outlier_lat = random.uniform(-90, 90)
-        outlier_lon = random.uniform(-180, 180)
+        outlier_lat = random.uniform(37.7081, 37.8324)
+        outlier_lon = random.uniform(-123.0137, -122.3570)
         timestamp = random_timestamp_in_time_range(0, 23)
         tweets.append(Tweet(f"t{tweet_id}", u, [outlier_lat, outlier_lon], timestamp))
         tweet_id += 1
