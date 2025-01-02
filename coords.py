@@ -6,6 +6,7 @@ import math
 import itertools
 from sklearn.metrics import confusion_matrix
 import statistics
+pd.options.mode.chained_assignment = None
 earth_radius = 6371.0
 
 def calculate_metrics(df, location):
@@ -64,65 +65,89 @@ original_tweets_dataset = pd.read_csv("tweets.csv")
 tweets_dataset = original_tweets_dataset[['Latitude','Longitude']]
 tweets_dataset = tweets_dataset.to_numpy()
 
-
-theorical_eps_meters = 600
-eps_rad = (theorical_eps_meters/1000 / earth_radius)
-
-eps_dgs = math.degrees(eps_rad)
-
+theorical_eps_meters = [50, 100] #150, 200, 250, 300, 350, 400, 450, 500, 
+                        #550, 600, 650, 700, 750, 800, 850, 900, 950]
+eps_values = [
+    math.degrees((eps / 1000) / earth_radius) for eps in theorical_eps_meters
+]
+print(eps_values)
+min_samples_values = [3, 4, 5]
 # Then using approximation of day and night hours estimate cluster of work and home
 # evaluate single cluster parameters then aggregate them for the overall dataset, for each of the zones (home/work)
 
 # Find number of unique users
 users=original_tweets_dataset.value_counts(subset="User").index.to_numpy()
 
-home_accuracies = []
-precisions = []
-sensitivities =[]
-specificities = []
-for u in users:
-    # find all posts releated to one particular user and DBSCAN (varying the parameters)
-    user_tweets = original_tweets_dataset[original_tweets_dataset['User'] == u]
-    user_tweets_train = user_tweets[['Latitude','Longitude']]
-    clustering = sklearn.cluster.DBSCAN(eps=eps_dgs,min_samples=4).fit(user_tweets_train)
-    user_tweets['cluster'] = clustering.labels_
-    unlabels = set(clustering.labels_)
-    centroids_home = []
-    centroids_work= []
-    for i in unlabels:
-        current_cluster = user_tweets[user_tweets['cluster'] == i]
-        to_calculate = current_cluster[['Latitude','Longitude']].to_numpy()
-        user_home_coords=current_cluster.iloc[0]['User_home']
-        user_home_coords=user_home_coords[1:len(user_home_coords)-1]
-        user_home_coords = user_home_coords.split(',')
-        user_work_coords=current_cluster.iloc[0]['User_work']
-        user_work_coords=user_work_coords[1:len(user_work_coords)-1]
-        user_work_coords = user_work_coords.split(',')
-        user_work_coords=np.array(user_work_coords,float)
-        user_home_coords=np.array(user_home_coords,float)
-        centroid_value=centroid(to_calculate)
-        medoid_value=medoid(to_calculate)
-        latitude_home = user_home_coords[0]
-        latitude_work = user_work_coords[0]
-        # print(f"{centroid_value}, home {user_home_coords}, work {user_work_coords}\n")
-        # print(f"{medoid_value}, home {user_home_coords}, work {user_work_coords}\n")
-        centroid_home=degrees_to_meters(latitude_home,*abs(centroid_value-user_home_coords))
-        centroid_work=degrees_to_meters(latitude_work,*abs(centroid_value-user_work_coords))
-        medoid_home=degrees_to_meters(latitude_home,*abs(medoid_value-user_home_coords))
-        medoid_work=degrees_to_meters(latitude_work,*abs(medoid_value-user_work_coords))
-        # print(f"Cluster: {i} user: {u}\n")
-        # print(f"Difference between centroid, home {centroid_home} and work {centroid_work}\n")
-        # print(f"Difference between medoid, home {medoid_home} and work {medoid_work}\n")
-        centroids_home.append(sum(centroid_home))
-        centroids_work.append(sum(centroid_work))
-    home_cluster=np.argmin(centroids_home)
-    work_cluster=np.argmin(centroids_work)
-    user_tweets.loc[user_tweets['cluster']==home_cluster, 'predicted_cluster'] = 'home'
-    user_tweets.loc[user_tweets['cluster']==work_cluster, 'predicted_cluster'] = 'work'
-    user_tweets.loc[(user_tweets['cluster']!=work_cluster) & (user_tweets['cluster']!=home_cluster), 'predicted_cluster'] = 'outlier'
-    home_accuracy,home_precision,home_sensitivity,home_specificity, home_balanced_accuracy,home_F1 = calculate_metrics(user_tweets,"home")
-    work_accuracy,work_precision,work_sensitivity,work_specificity, work_balanced_accuracy,work_F1 = calculate_metrics(user_tweets,"work")
-    home_accuracies.append(home_accuracy)
-print(statistics.median(home_accuracies))
-print(statistics.mean(home_accuracies))
+results = []
+for eps_dgs in eps_values:
+    for min_samples in min_samples_values:
+        home_accuracies = []
+        precisions = []
+        sensitivities =[]
+        specificities = []
+        for u in users:
+        # find all posts releated to one particular user and DBSCAN (varying the parameters)
+            user_tweets = original_tweets_dataset[original_tweets_dataset['User'] == u]
+            user_tweets_train = user_tweets[['Latitude','Longitude']]
+            clustering = sklearn.cluster.DBSCAN(eps=eps_dgs, min_samples=min_samples).fit(user_tweets_train)
+            user_tweets['cluster'] = clustering.labels_
+            unlabels = set(clustering.labels_)
+            unlabels = set(clustering.labels_)
+            unlabels = {label for label in unlabels if label >= 0}
+            if not unlabels:
+                continue
+            centroids_home = []
+            centroids_work= []
+            for i in unlabels:
+                current_cluster = user_tweets[user_tweets['cluster'] == i]
+                to_calculate = current_cluster[['Latitude','Longitude']].to_numpy()
+                user_home_coords=current_cluster.iloc[0]['User_home']
+                user_home_coords=user_home_coords[1:len(user_home_coords)-1]
+                user_home_coords = user_home_coords.split(',')
+                user_work_coords=current_cluster.iloc[0]['User_work']
+                user_work_coords=user_work_coords[1:len(user_work_coords)-1]
+                user_work_coords = user_work_coords.split(',')
+                user_work_coords=np.array(user_work_coords,float)
+                user_home_coords=np.array(user_home_coords,float)
 
+                try:
+                    user_home_coords = np.array(eval(current_cluster.iloc[0]['User_home']), dtype=float)
+                    user_work_coords = np.array(eval(current_cluster.iloc[0]['User_work']), dtype=float)
+                except:
+                    continue
+
+                centroid_value=centroid(to_calculate)
+                medoid_value=medoid(to_calculate)
+                latitude_home = user_home_coords[0]
+                latitude_work = user_work_coords[0]
+                # print(f"{centroid_value}, home {user_home_coords}, work {user_work_coords}\n")
+                # print(f"{medoid_value}, home {user_home_coords}, work {user_work_coords}\n")
+                centroid_home=degrees_to_meters(latitude_home,*abs(centroid_value-user_home_coords))
+                centroid_work=degrees_to_meters(latitude_work,*abs(centroid_value-user_work_coords))
+                medoid_home=degrees_to_meters(latitude_home,*abs(medoid_value-user_home_coords))
+                medoid_work=degrees_to_meters(latitude_work,*abs(medoid_value-user_work_coords))
+                # print(f"Cluster: {i} user: {u}\n")
+                # print(f"Difference between centroid, home {centroid_home} and work {centroid_work}\n")
+                # print(f"Difference between medoid, home {medoid_home} and work {medoid_work}\n")
+                centroids_home.append(sum(centroid_home))
+                centroids_work.append(sum(centroid_work))
+            home_cluster=np.argmin(centroids_home)
+            work_cluster=np.argmin(centroids_work)
+            user_tweets.loc[user_tweets['cluster']==home_cluster, 'predicted_cluster'] = 'home'
+            user_tweets.loc[user_tweets['cluster']==work_cluster, 'predicted_cluster'] = 'work'
+            user_tweets.loc[(user_tweets['cluster']!=work_cluster) & (user_tweets['cluster']!=home_cluster), 'predicted_cluster'] = 'outlier'
+            home_accuracy,home_precision,home_sensitivity,home_specificity, home_balanced_accuracy,home_F1 = calculate_metrics(user_tweets,"home")
+            work_accuracy,work_precision,work_sensitivity,work_specificity, work_balanced_accuracy,work_F1 = calculate_metrics(user_tweets,"work")
+            home_accuracies.append(home_accuracy)
+        if home_accuracies:
+            results.append({
+                'eps': eps_dgs,
+                'min_samples': min_samples,
+                'median_home_accuracy': np.median(home_accuracies),
+                'mean_home_accuracy': np.mean(home_accuracies)
+            })
+results_df = pd.DataFrame(results)
+results_df.sort_values(by='mean_home_accuracy', ascending=False, inplace=True)
+print(results_df)
+#print(statistics.median(home_accuracies))
+#print(statistics.mean(home_accuracies))
