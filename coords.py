@@ -65,13 +65,9 @@ original_tweets_dataset = pd.read_csv("tweets.csv")
 tweets_dataset = original_tweets_dataset[['Latitude','Longitude']]
 tweets_dataset = tweets_dataset.to_numpy()
 
-theorical_eps_meters = [50, 100] #150, 200, 250, 300, 350, 400, 450, 500, 
-                        #550, 600, 650, 700, 750, 800, 850, 900, 950]
-eps_values = [
-    math.degrees((eps / 1000) / earth_radius) for eps in theorical_eps_meters
-]
-print(eps_values)
-min_samples_values = [3, 4, 5]
+theorical_eps_meters = [50,100,150,200,300,400,500,600,700,800,900,1000]
+
+min_samples_values = [i for i in range(4,round(math.sqrt(len(tweets_dataset))),round(math.sqrt(len(tweets_dataset))/10))]
 # Then using approximation of day and night hours estimate cluster of work and home
 # evaluate single cluster parameters then aggregate them for the overall dataset, for each of the zones (home/work)
 
@@ -79,12 +75,14 @@ min_samples_values = [3, 4, 5]
 users=original_tweets_dataset.value_counts(subset="User").index.to_numpy()
 
 results = []
-for eps_dgs in eps_values:
+for eps in theorical_eps_meters:
+    eps_dgs=math.degrees((eps / 1000) / earth_radius)
     for min_samples in min_samples_values:
-        home_accuracies = []
-        precisions = []
-        sensitivities =[]
-        specificities = []
+        accuracies = [[],[]]
+        precisions = [[],[]]
+        sensitivities =[[],[]]
+        specificities = [[],[]]
+        centroid_distances = [[],[]]
         for u in users:
         # find all posts releated to one particular user and DBSCAN (varying the parameters)
             user_tweets = original_tweets_dataset[original_tweets_dataset['User'] == u]
@@ -132,22 +130,34 @@ for eps_dgs in eps_values:
                 centroids_home.append(sum(centroid_home))
                 centroids_work.append(sum(centroid_work))
             home_cluster=np.argmin(centroids_home)
+            home_cluster_dist_value = np.min(centroids_home)
             work_cluster=np.argmin(centroids_work)
+            work_cluster_dist_value = np.min(centroids_work)
             user_tweets.loc[user_tweets['cluster']==home_cluster, 'predicted_cluster'] = 'home'
             user_tweets.loc[user_tweets['cluster']==work_cluster, 'predicted_cluster'] = 'work'
             user_tweets.loc[(user_tweets['cluster']!=work_cluster) & (user_tweets['cluster']!=home_cluster), 'predicted_cluster'] = 'outlier'
             home_accuracy,home_precision,home_sensitivity,home_specificity, home_balanced_accuracy,home_F1 = calculate_metrics(user_tweets,"home")
             work_accuracy,work_precision,work_sensitivity,work_specificity, work_balanced_accuracy,work_F1 = calculate_metrics(user_tweets,"work")
-            home_accuracies.append(home_accuracy)
-        if home_accuracies:
+            accuracies[0].append(home_accuracy)
+            accuracies[1].append(work_accuracy)
+            centroid_distances[0].append(home_cluster_dist_value)
+            centroid_distances[1].append(work_cluster_dist_value)
+        if accuracies[0] and accuracies[1]:
             results.append({
-                'eps': eps_dgs,
+                'eps': eps,
                 'min_samples': min_samples,
-                'median_home_accuracy': np.median(home_accuracies),
-                'mean_home_accuracy': np.mean(home_accuracies)
+                'median_home_accuracy': np.median(accuracies[0]),
+                'mean_home_accuracy': np.mean(accuracies[0]),
+                'median_work_accuracy': np.median(accuracies[1]),
+                'mean_work_accuracy': np.mean(accuracies[1]),
+                'home_centroid_mean_distance':np.mean(centroid_distances[0]),
+                'work_centroid_mean_distance':np.mean(centroid_distances[1])
             })
+        else:
+            break
 results_df = pd.DataFrame(results)
 results_df.sort_values(by='mean_home_accuracy', ascending=False, inplace=True)
+results_df.to_csv("results.csv",index=False)
 print(results_df)
 #print(statistics.median(home_accuracies))
 #print(statistics.mean(home_accuracies))
