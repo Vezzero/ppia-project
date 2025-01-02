@@ -27,12 +27,12 @@ def generate_location_near(lat, lon, min_distance_km, max_distance_km):
     return new_lat, new_lon
 
 class Tweet:
-    def __init__(self, id, user, coords, timestamp):
+    def __init__(self, id, user, coords, timestamp, cluster):
         self.id = id
         self.coords = coords
         self.user = user
         self.timestamp = timestamp
-
+        self.cluster = cluster
     def __str__(self):
         return f"tweetId:{self.id} {self.coords} {self.user.username} ora:{self.timestamp}"
 
@@ -68,9 +68,9 @@ r2 = r.random()
 print(r1)
 print(r2)
 num_users = 100
-post_home_user = 10
-post_work_user = 10
-post_outliers = 2
+post_home_user = 100
+post_work_user = 100
+post_outliers = 20
 users = []
 tweets = []
 # Generate users with random home and work locations
@@ -84,6 +84,7 @@ for i in range(num_users):
 
 # Count effective tweet ids
 tweet_id = 0
+cluster_id = 0
 for u in users:
     # Generate tweets "at home" (8 PM to 7 AM)
     for _ in range(post_home_user):
@@ -91,24 +92,22 @@ for u in users:
         # noisy_home = u.home + noise
         noisy_home = generate_location_near(u.home[0], u.home[1], 0.01, 0.3)
         timestamp = random_timestamp_in_time_range(20, 7)
-        tweets.append(Tweet(f"t{tweet_id}", u, noisy_home, timestamp))
+        tweets.append(Tweet(f"t{tweet_id}", u, noisy_home, timestamp, "home"))
         tweet_id += 1
-
     for _ in range(post_work_user):
         # noise = r.normal(size=2,loc=0,scale=0.005)
         # noisy_work = u.work + noise
         noisy_work = generate_location_near(u.work[0], u.work[1], 0.01, 0.3)
         timestamp = random_timestamp_in_time_range(9, 17)
-        tweets.append(Tweet(f"t{tweet_id}", u, noisy_work, timestamp))
+        tweets.append(Tweet(f"t{tweet_id}", u, noisy_work, timestamp, "work"))
         tweet_id += 1
-
     for _ in range(post_outliers):
         #noise = r.normal(size=2,loc=0,scale=0.1)
         #noisy_home = u.home + noise
         outlier_lat = r.uniform(37.7081, 37.8324)
         outlier_lon = r.uniform(-123.0137, -122.3570)
         timestamp = random_timestamp_in_time_range(0, 23)
-        tweets.append(Tweet(f"t{tweet_id}", u, [outlier_lat, outlier_lon], timestamp))
+        tweets.append(Tweet(f"t{tweet_id}", u, [outlier_lat, outlier_lon], timestamp, "outlier"))
         tweet_id += 1
 
 user_tweets = []
@@ -122,6 +121,7 @@ for t in tweets:
             "Timestamp": datetime.fromtimestamp(t.timestamp).strftime("%Y-%m-%d %H:%M:%S"),
             "User_home": t.user.home,
             "User_work": t.user.work,
+            "cluster_id": t.cluster
         }
     )
 
