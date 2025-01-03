@@ -62,11 +62,13 @@ def degrees_to_meters(latitude, delta_lat=0, delta_lon=0):
     return meters_lat, meters_lon
 
 # Find number of unique users
-def analyze(dataset_path_without_csv,theorical_eps_meters,min_samples_values):
+def analyze(dataset_path_without_csv,theorical_eps_meters):
     original_tweets_dataset = pd.read_csv(f"{dataset_path_without_csv}.csv")
     tweets_dataset = original_tweets_dataset[['Latitude','Longitude']]
     tweets_dataset = tweets_dataset.to_numpy()
 
+    #min_samples_values = [i for i in range(4,round(math.sqrt(len(tweets_dataset))),round(math.sqrt(len(tweets_dataset))/20))]
+    min_samples_values=[i for i in range(4,100,5)]
     users=original_tweets_dataset.value_counts(subset="User").index.to_numpy()
 
     results = []
@@ -182,14 +184,3 @@ def analyze(dataset_path_without_csv,theorical_eps_meters,min_samples_values):
     print(results_df)
 #print(statistics.median(home_accuracies))
 #print(statistics.mean(home_accuracies))
-
-original_tweets_dataset = pd.read_csv("tweets.csv")
-tweets_dataset = original_tweets_dataset[['Latitude','Longitude']]
-tweets_dataset = tweets_dataset.to_numpy()
-
-theorical_eps_meters = [50,100,150,200,300,400,500,600,700,800,900,1000]
-
-min_samples_values = [i for i in range(4,round(math.sqrt(len(tweets_dataset))),round(math.sqrt(len(tweets_dataset))/10))]
-# Then using approximation of day and night hours estimate cluster of work and home
-# evaluate single cluster parameters then aggregate them for the overall dataset, for each of the zones (home/work)
-analyze("tweets",[50,100,150,200,300,400,500,600,700,800,900,1000],[i for i in range(4,round(math.sqrt(len(tweets_dataset))),round(math.sqrt(len(tweets_dataset))/10))])
