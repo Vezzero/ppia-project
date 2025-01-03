@@ -82,6 +82,8 @@ for eps in theorical_eps_meters:
         precisions = [[],[]]
         sensitivities =[[],[]]
         specificities = [[],[]]
+        balanced_accuracies = [[],[]]
+        F1_scores = [[],[]]
         centroid_distances = [[],[]]
         for u in users:
         # find all posts releated to one particular user and DBSCAN (varying the parameters)
@@ -142,6 +144,14 @@ for eps in theorical_eps_meters:
             accuracies[1].append(work_accuracy)
             centroid_distances[0].append(home_cluster_dist_value)
             centroid_distances[1].append(work_cluster_dist_value)
+            sensitivities[0].append(home_sensitivity)
+            sensitivities[1].append(work_sensitivity)
+            specificities[0].append(home_specificity)
+            specificities[1].append(work_specificity)
+            balanced_accuracies[0].append(home_balanced_accuracy)
+            balanced_accuracies[1].append(work_balanced_accuracy)
+            F1_scores[0].append(home_F1)
+            F1_scores[1].append(work_F1)
         if accuracies[0] and accuracies[1]:
             results.append({
                 'eps': eps,
@@ -151,7 +161,23 @@ for eps in theorical_eps_meters:
                 'median_work_accuracy': np.median(accuracies[1]),
                 'mean_work_accuracy': np.mean(accuracies[1]),
                 'home_centroid_mean_distance':np.mean(centroid_distances[0]),
-                'work_centroid_mean_distance':np.mean(centroid_distances[1])
+                'work_centroid_mean_distance':np.mean(centroid_distances[1]),
+                'mean_home_sensitivity' : np.mean(sensitivities[0]),
+                'median_home_sensitivity' : np.median(sensitivities[0]),
+                'mean_work_sensitivity' : np.mean(sensitivities[1]),
+                'median_work_sensitivity' : np.median(sensitivities[1]),
+                'mean_home_specificity' : np.mean(specificities[0]),
+                'median_home_specificity' : np.median(specificities[0]),
+                'mean_work_specificity' : np.mean(specificities[1]),
+                'median_work_specificity' : np.median(specificities[1]),
+                'mean_home_balanced_accuracy' : np.mean(balanced_accuracies[0]),
+                'median_home_balanced_accuracy' : np.median(balanced_accuracies[0]),
+                'mean_work_balanced_accuracy': np.mean(balanced_accuracies[1]),
+                'median_work_balanced_accuracy':np.median(balanced_accuracies[1]),
+                'mean_home_f1':np.mean(F1_scores[0]),
+                'median_home_f1':np.median(F1_scores[0]),
+                'mean_work_f1':np.mean(F1_scores[1]),
+                'median_work_f1':np.median(F1_scores[1]),
             })
         else:
             break
