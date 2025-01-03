@@ -1,6 +1,7 @@
 import pandas as pd
 import time
 import numpy.random as nr
+import numpy as np
 import random
 import math
 from datetime import datetime, timedelta
@@ -37,7 +38,7 @@ class Tweet:
         return f"tweetId:{self.id} {self.coords} {self.user.username} ora:{self.timestamp}"
 
 class User:
-    def __init__(self, username, home, work="Aprilia"):
+    def __init__(self, username, home, work):
         self.username = username
         self.home = home
         self.work = work
@@ -78,7 +79,9 @@ for i in range(num_users):
     home_lat = r.uniform(37.7081, 37.8324)
     home_lon = r.uniform(-123.0137, -122.3570)
     home = [home_lat, home_lon]
-    work_lat, work_lon = generate_location_near(home_lat, home_lon, 10, 20)
+    #work_lat, work_lon = generate_location_near(home_lat, home_lon, 10, 20)
+    work_lat = r.uniform(37.7081, 37.8324)
+    work_lon = r.uniform(-123.0137, -122.3570)
     work = [work_lat, work_lon]
     users.append(User(f"u{i}", home, work))
 
@@ -90,14 +93,14 @@ for u in users:
     for _ in range(post_home_user):
         # noise = r.normal(size=2,loc=0,scale=0.005)
         # noisy_home = u.home + noise
-        noisy_home = generate_location_near(u.home[0], u.home[1], 0.01, 0.3)
+        noisy_home = generate_location_near(u.home[0], u.home[1], 0, 0.2)
         timestamp = random_timestamp_in_time_range(20, 7)
         tweets.append(Tweet(f"t{tweet_id}", u, noisy_home, timestamp, "home"))
         tweet_id += 1
     for _ in range(post_work_user):
         # noise = r.normal(size=2,loc=0,scale=0.005)
         # noisy_work = u.work + noise
-        noisy_work = generate_location_near(u.work[0], u.work[1], 0.01, 0.3)
+        noisy_work = generate_location_near(u.work[0], u.work[1], 0, 0.2)
         timestamp = random_timestamp_in_time_range(9, 17)
         tweets.append(Tweet(f"t{tweet_id}", u, noisy_work, timestamp, "work"))
         tweet_id += 1
