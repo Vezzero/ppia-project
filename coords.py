@@ -120,19 +120,19 @@ for eps in theorical_eps_meters:
                 latitude_work = user_work_coords[0]
                 # print(f"{centroid_value}, home {user_home_coords}, work {user_work_coords}\n")
                 # print(f"{medoid_value}, home {user_home_coords}, work {user_work_coords}\n")
-                centroid_home=degrees_to_meters(latitude_home,*abs(centroid_value-user_home_coords))
-                centroid_work=degrees_to_meters(latitude_work,*abs(centroid_value-user_work_coords))
-                medoid_home=degrees_to_meters(latitude_home,*abs(medoid_value-user_home_coords))
-                medoid_work=degrees_to_meters(latitude_work,*abs(medoid_value-user_work_coords))
+                centroid_home=degrees_to_meters(latitude_home,*(centroid_value-user_home_coords))
+                centroid_work=degrees_to_meters(latitude_work,*(centroid_value-user_work_coords))
+                medoid_home=degrees_to_meters(latitude_home,*(medoid_value-user_home_coords))
+                medoid_work=degrees_to_meters(latitude_work,*(medoid_value-user_work_coords))
                 # print(f"Cluster: {i} user: {u}\n")
                 # print(f"Difference between centroid, home {centroid_home} and work {centroid_work}\n")
                 # print(f"Difference between medoid, home {medoid_home} and work {medoid_work}\n")
                 centroids_home.append(sum(centroid_home))
                 centroids_work.append(sum(centroid_work))
-            home_cluster=np.argmin(centroids_home)
-            home_cluster_dist_value = np.min(centroids_home)
-            work_cluster=np.argmin(centroids_work)
-            work_cluster_dist_value = np.min(centroids_work)
+            home_cluster=np.argmin(np.abs(centroids_home))
+            home_cluster_dist_value = centroids_home[np.argmin(np.abs(centroids_home))]
+            work_cluster=np.argmin(np.abs(centroids_work))
+            work_cluster_dist_value = centroids_work[np.argmin(np.abs(centroids_work))]
             user_tweets.loc[user_tweets['cluster']==home_cluster, 'predicted_cluster'] = 'home'
             user_tweets.loc[user_tweets['cluster']==work_cluster, 'predicted_cluster'] = 'work'
             user_tweets.loc[(user_tweets['cluster']!=work_cluster) & (user_tweets['cluster']!=home_cluster), 'predicted_cluster'] = 'outlier'
