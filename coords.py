@@ -6,6 +6,7 @@ import math
 import itertools
 from sklearn.metrics import confusion_matrix
 import statistics
+from scipy.spatial import Voronoi, voronoi_plot_2d
 pd.options.mode.chained_assignment = None
 earth_radius = 6371.0
 
@@ -61,6 +62,20 @@ def degrees_to_meters(latitude, delta_lat=0, delta_lon=0):
 
     return meters_lat, meters_lon
 
+def assign_voronoi_clusters(df, centers):
+    # vonoroi diag
+    vor = Voronoi(centers)
+    #For each point, find nearest Voronoi seed
+    #The seeds for the Voronoi diagram are the points in centers
+    points = df[['Latitude','Longitude']].to_numpy()
+    labels = []
+    
+    for p in points:
+        dists = np.linalg.norm(centers - p, axis=1)
+        labels.append(np.argmin(dists))
+
+    return labels, vor
+
 # Find number of unique users
 def analyze(dataset_path_without_csv,theorical_eps_meters):
     original_tweets_dataset = pd.read_csv(f"{dataset_path_without_csv}.csv")
@@ -95,6 +110,7 @@ def analyze(dataset_path_without_csv,theorical_eps_meters):
                     continue
                 centroids_home = []
                 centroids_work= []
+                cluster_centers = []
                 for i in unlabels:
                     current_cluster = user_tweets[user_tweets['cluster'] == i]
                     to_calculate = current_cluster[['Latitude','Longitude']].to_numpy()
@@ -114,6 +130,7 @@ def analyze(dataset_path_without_csv,theorical_eps_meters):
                         continue
 
                     centroid_value=centroid(to_calculate)
+                    cluster_centers.append(centroid_value)
                     medoid_value=medoid(to_calculate)
                     latitude_home = user_home_coords[0]
                     latitude_work = user_work_coords[0]
@@ -128,6 +145,13 @@ def analyze(dataset_path_without_csv,theorical_eps_meters):
                     # print(f"Difference between medoid, home {medoid_home} and work {medoid_work}\n")
                     centroids_home.append(sum(centroid_home))
                     centroids_work.append(sum(centroid_work))
+                cluster_centers = np.array(cluster_centers)
+                #if len(cluster_centers) < 2:
+                    # If there's only one cluster center, skip to avoid errors in building a Voronoi diagram.
+                    #continue
+                voronoi_labels = assign_voronoi_clusters(user_tweets, cluster_centers)
+                user_tweets['voronoi_cluster'] = voronoi_labels
+
                 home_cluster=np.argmin(np.abs(centroids_home))
                 home_cluster_dist_value = centroids_home[np.argmin(np.abs(centroids_home))]
                 work_cluster=np.argmin(np.abs(centroids_work))
