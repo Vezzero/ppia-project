@@ -83,7 +83,7 @@ def analyze(dataset_path_without_csv,theorical_eps_meters):
     tweets_dataset = tweets_dataset.to_numpy()
 
     #min_samples_values = [i for i in range(4,round(math.sqrt(len(tweets_dataset))),round(math.sqrt(len(tweets_dataset))/20))]
-    min_samples_values=[i for i in range(4,100,5)]
+    min_samples_values=[i for i in range(4,12,1)]
     users=original_tweets_dataset.value_counts(subset="User").index.to_numpy()
 
     results = []
