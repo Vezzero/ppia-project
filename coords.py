@@ -149,8 +149,8 @@ def analyze(dataset_path_without_csv,theorical_eps_meters):
                 #if len(cluster_centers) < 2:
                     # If there's only one cluster center, skip to avoid errors in building a Voronoi diagram.
                     #continue
-                voronoi_labels = assign_voronoi_clusters(user_tweets, cluster_centers)
-                user_tweets['voronoi_cluster'] = voronoi_labels
+                #voronoi_labels = assign_voronoi_clusters(user_tweets, cluster_centers)
+                #user_tweets['voronoi_cluster'] = voronoi_labels
 
                 home_cluster=np.argmin(np.abs(centroids_home))
                 home_cluster_dist_value = centroids_home[np.argmin(np.abs(centroids_home))]
